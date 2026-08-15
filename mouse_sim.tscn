@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ds7akp48ssdu8"]
+
+[ext_resource type="Script" uid="uid://bbcuabfpyv84p" path="res://mouse_sim.gd" id="1_1ua8c"]
+
+[node name="MouseSim" type="Node2D"]
+script = ExtResource("1_1ua8c")

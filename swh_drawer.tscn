@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3 uid="uid://csl7lhn0c7yr4"]
+
+[ext_resource type="Script" uid="uid://btbl7spmcgmyj" path="res://temp.gd" id="1_ho4lv"]
+[ext_resource type="Script" uid="uid://f8nim3qysf1f" path="res://mouse_follow.gd" id="2_4ntc2"]
+[ext_resource type="Script" uid="uid://c0bx7vk1xuukh" path="res://mouse_handler.gd" id="3_2s38o"]
+[ext_resource type="Script" uid="uid://doyvcig4g68pl" path="res://world_command.gd" id="3_gwi7u"]
+[ext_resource type="Script" uid="uid://c5x7vmnmold25" path="res://PhysicsBodyManager.gd" id="5_rbj2s"]
+[ext_resource type="Script" uid="uid://dcnkhpywjrab" path="res://tst.gd" id="6_y40tu"]
+
+[node name="swhDrawer" type="Node2D"]
+script = ExtResource("1_ho4lv")
+
+[node name="Mousefollow" type="Node2D" parent="." node_paths=PackedStringArray("worldCommand")]
+script = ExtResource("2_4ntc2")
+worldCommand = NodePath("../WorldCommand")
+
+[node name="WorldCommand" type="Node" parent="."]
+script = ExtResource("3_gwi7u")
+
+[node name="MouseHandler" type="Node2D" parent="."]
+script = ExtResource("3_2s38o")
+
+[node name="SolidBodyManager" type="Node2D" parent="."]
+script = ExtResource("5_rbj2s")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="Node2D" type="Node2D" parent="."]
+process_mode = 4
+script = ExtResource("6_y40tu")

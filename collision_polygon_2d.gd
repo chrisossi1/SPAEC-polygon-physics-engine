@@ -1,0 +1,4 @@
+extends CollisionPolygon2D
+class_name CollisionPolygon2D_
+
+var physicsShape:PhysicsShape
