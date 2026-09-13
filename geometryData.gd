@@ -1,58 +1,38 @@
 class_name GeometryData
 
-var shapes:Array[ShapeWithHoles]
-var chunkShape:ChunkShape
+var shape:ClipShape
 var contour:ContourData
-var shapeData_map := {} # { ShapeWithHoles : ShapeData }
 
-var use_chunks:bool
 
-const CHUNK_SIZE = 400
-
-func set_shapes(new_shapes:Array[ShapeWithHoles]):
-
-	# Update shapes
-	shapes = new_shapes
-
-	# rebuild chunkShape
-	chunkShape = ChunkShape.create_chunked(shapes, CHUNK_SIZE)
-
-	# Calculate new shape contours
-	shapeData_map.clear()
-	for swh in shapes:
-		shapeData_map[swh] = create_shapeData(swh)
-
-	# Calculate overall contour
-	var shapeDatas = shapeData_map.values()
-	contour = shapeDatas[0].contour
-	for i in range(1, len(shapeDatas)):
-		var shapeData = shapeDatas[i]
-		contour = contour.add(shapeData.contour)
+# Todo: Queue updates for tick
+func set_shape(new_shape:ClipShape):
+	shape = new_shape
+	contour = calculate_contour(shape)
 
 
 
 
 
-class ShapeData:
-	var solid:PolygonData
-	var holes:Dictionary = {} # { HoleRef : PolygonData }
-	var contour:ContourData
+static func calculate_contour(shape:ClipShape) -> ContourData:
 
-
-static func create_shapeData(swh:ShapeWithHoles) -> ShapeData:
-	var sd = ShapeData.new()
-	sd.solid = create_polygonData(swh.solid)
-	var combined_contour:ContourData = sd.solid.contour
-	for holeRef in swh.holeRefs:
-		holeRef = holeRef as ShapeWithHoles.HoleRef 
-		var data := create_polygonData(holeRef.points, true)
-		sd.holes[holeRef] = data
+	var combined_contour:ContourData = ContourData.new()
+	for path in shape.to_packed_paths():
+		var data:PolygonData
+		if is_hole(path):
+			path.reverse()
+			data = create_polygonData(path, true)
+		else:
+			data = create_polygonData(path)
 		combined_contour = combined_contour.add(data.contour)
-	sd.contour = combined_contour
-	return sd
+
+	return combined_contour
 
 
 
+
+
+static func is_hole(poly:PackedVector2Array) -> bool:
+	return Geometry2D.is_polygon_clockwise(poly)
 
 
 
@@ -113,10 +93,10 @@ class ContourData:
 
 
 static func create_polygonData(poly:PackedVector2Array, inver := false) -> PolygonData:
+
 	var data = PolygonData.new()
 	data.contour.n = poly.size()
 	calc_area_and_centroid_offset(data, poly)
-
 
 	assert(data.contour.area) # TODO: We need to CATCH THIS CONDITION!
 	#TODO: Check if area too small
@@ -128,7 +108,6 @@ static func create_polygonData(poly:PackedVector2Array, inver := false) -> Polyg
 	if inver:
 		data.contour.area = -data.contour.area
 		data.contour.moment_factor = -data.contour.moment_factor
-		
 	return data
 
 
@@ -250,95 +229,7 @@ static func triangleArea(p:Vector2, q:Vector2, r:Vector2) -> float:
 
 
 
-func draw(ci:CanvasItem, draw_chunkShape := false):
-	for swh in shapes:
-		swh.draw(ci)
-	if draw_chunkShape:
-		chunkShape.draw(ci)
-
-
-
-
-
-
-# ############## GEOMETRY UPDATES ################ #
-
-
-
-func update_geometry(updates:Array[GeometryUpdate]) -> bool:
-	for update in updates:
-		update.resolve(self)
-	if contour.centroid.length_squared() > 500000:
-		# Multishape renormalization necessary.
-		return false
-	return true
-
-
-
-class GeometryUpdate:
-	pass
-
-
-class GeometryUpdate_SWH:
-	extends GeometryUpdate
-	var added:Array[ShapeWithHoles]
-	var removed:Array[ShapeWithHoles]
-	func resolve(geometry:GeometryData):
-		for r in removed:
-			assert(geometry.shapes.has(r))
-			geometry.shapes.erase(r)
-			assert(geometry.shapeData_map.has(r))
-			var data = geometry.shapeData_map[r]
-			geometry.shapeData_map.erase(r)
-			geometry.contour = geometry.contour.subtract(data.contour)
-		for a in added:
-			assert(not geometry.shapes.has(a))
-			geometry.shapes.append(a)
-			assert(not geometry.shapeData_map.has(a))
-			var data = GeometryData.create_shapeData(a)
-			assert(data.contour.area > .0001)
-			assert(data.contour.moment_factor > .0001)
-			geometry.shapeData_map[a] = data
-			geometry.contour = geometry.contour.add(data.contour)
-
-
-
-class GeometryUpdate_ChunkShape:
-	extends GeometryUpdate
-	enum OP {CLIP, EXTEND}
-	var points:PackedVector2Array
-	var operation:OP = OP.CLIP
-	func resolve(geometry:GeometryData):
-
-		if operation == OP.CLIP:
-			geometry.chunkShape = ChunkShape.clip_polyon(geometry.chunkShape,points)
-		elif operation == OP.EXTEND:
-			geometry.chunkShape = ChunkShape.merge_polygon(geometry.chunkShape,points, geometry.shapes)#MARK todo: IMPLEMENT
-			
-
-			'''#Debug
-
-			print("Clipping 2")
-			var double := ChunkShape.clip_polygon(geometry.chunkShape,points)
-			#var triple := ChunkShape.clip_polygon(double,points)
-
-			var unaccounted_indexes = []
-			for key in geometry.chunkShape.chunks.keys():
-				if key in double.chunks.keys():
-					continue
-				unaccounted_indexes.append(key)
-
-			for chunk in geometry.chunkShape.to_add + geometry.chunkShape.to_update:
-				print("polygon" + chunk.debug)
-
-			#assert(geometry.chunkShape.chunks.keys().size() == double.chunks.keys().size()) # Compare number of indexes 
-			assert(unaccounted_indexes.size() == 0)
-
-			# Deep comparison
-			for index in geometry.chunkShape.chunks.keys():
-				var chunks_at_index = geometry.chunkShape.chunks[index]
-				var chunks_at_index1 = double.chunks[index]
-				assert(chunks_at_index.size() == chunks_at_index1.size())
-			
-
-		'''
+func draw(ci:CanvasItem, ):
+	for path in shape.to_packed_paths():
+		var col := Color.RED if is_hole(path) else Color.BLUE
+		ci.draw_polyline(path+PackedVector2Array([path[0]]), col)

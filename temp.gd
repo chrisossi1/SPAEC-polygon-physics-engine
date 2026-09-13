@@ -10,12 +10,6 @@ var obj := GameObject.new()
 
 func _ready() -> void:
 	
-	Performance.add_custom_monitor("Index Range", func():return ChunkShape.index_range)
-	Performance.add_custom_monitor("Shape Merges", func():return ChunkShape.shape_merges)
-	Performance.add_custom_monitor("% Merges per Index", func():return 100*ChunkShape.shape_merges/ChunkShape.index_range if ChunkShape.index_range else 0)
-	Performance.add_custom_monitor("Max CPI", func():return obj.geometry.chunkShape.get_max_chunks_per_index())
-
-	
 	var mh = $MouseHandler as MouseHandler
 	mh.mouse_event.connect(mouse_event)
 	mh.mouse_event.connect($Mousefollow.mouse_event)
@@ -32,14 +26,11 @@ func _ready() -> void:
 
 	poly = x*poly
 
-	#for i in range(30):
-	#	poly.append(Vector2(randi_range(-100,100),randi_range(-100,100)))
-	var swhs:Array[ShapeWithHoles]= [ShapeWithHoles.new(poly)]
-	#[ShapeWithHoles.new(x*PolyFuncs._generate_regular_polygon(4, 100), [PolyFuncs._generate_regular_polygon(4,10)])]
-	obj.geometry.set_shapes(swhs)
+	var shape = ClipShape.new()
+	shape.add_path(poly)
 
-	# Update collision shapes
-	obj.physicsShape.update_collision_map(obj.geometry.chunkShape)
+	obj.geometry.set_shape(shape)
+	obj.physicsShape.update_collision_map(obj.geometry.shape)
 
 
 
@@ -61,9 +52,8 @@ func _process(_delta):
 	queue_redraw()
 	var wc:WorldCommand = $WorldCommand
 	wc.resolve_commands(ws, _delta)
-	
-	
-	
+
+
 func mouse_event(event:MouseHandler.MouseEvent):
 	if event.type == event.HOVER_CHANGED:
 		pass

@@ -29,7 +29,7 @@ var physicsShape:PhysicsShape
 
 
 
-static func from_query_result(result:Dictionary):
+static func from_query_result(result:Dictionary) -> GameObject:
 	var body = result["collider"]
 	var shape_idx = result["shape"]
 	var body_shape_owner_id = body.shape_find_owner(shape_idx)

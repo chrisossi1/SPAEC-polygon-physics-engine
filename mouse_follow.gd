@@ -100,7 +100,7 @@ func cut_shape(shape:Shape2D, op:ACTIVE_TYPE):
 
 		# ## CALCULATE CLIPPER GEOMETRY
 		var obj_transform = obj.physicsShape.get_global_transform()
-		var est_prev_origin = obj_transform.origin - (body.linear_velocity * interval)
+		var est_prev_origin = obj_transform.origin - (body.linear_velocity * interval) #Todo: What about off-axis physicsShapes that are rotating about COM?
 		var est_prev_rotation = obj_transform.get_rotation() - (body.angular_velocity * interval)
 		var prev_obj_transform = Transform2D(est_prev_rotation, est_prev_origin)
 

@@ -2,11 +2,12 @@ class_name ShapeWithHoles
 
 var solid:PackedVector2Array
 var holes:Array[PackedVector2Array]:get = _get_holes #Do not append directly to holes
-var holeRefs:Array[HoleRef] = [] #Holes are packed in holeRef so they can be referenced and mapped data to
 
+var shape:ClipShape
 
 
 func _init(_solid:PackedVector2Array, _holes:Array[PackedVector2Array] = []):
+	shape.add_path(solid)
 	solid = _solid
 	for h in _holes:
 		add_hole(h)

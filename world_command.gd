@@ -11,122 +11,36 @@ class wc_clip_object:
 	enum OP {CLIP, EXTEND, INTERSECT}
 	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
 		#assert(object.state != object.STATE.DESTROYED)
+
+		var incoming_clipShape := ClipShape.new()
+		incoming_clipShape.add_path(shape)
+
+		var result:ClipShape
+		
 		match op:
 			OP.CLIP:
-				WorldCommand.clip_object(worldState, object, shape, notifs)
+				result = object.geometry.shape.clip(incoming_clipShape)
 			OP.EXTEND:
-				WorldCommand.extend_object(worldState, object, shape, notifs)
+				incoming_clipShape.add_paths(object.geometry.shape.to_packed_paths())
+				result = incoming_clipShape.merge() #TODO: gdext clipper2 MERGE
 			OP.INTERSECT:
-				WorldCommand.intersect_object(worldState, object, shape, notifs)
+				result = object.geometry.shape.intersect(incoming_clipShape)
 
+		var final = ClipShape.new()
+		for path in result.to_packed_paths():
+			if PolyFuncs._calc_area(path) < 100:continue #Filter out very small pieces
+			final.add_path(path)
 
-
-static func clip_object(ws:WorldState, obj:GameObject, interpolated:PackedVector2Array, notifs:Array[Presentation.notif]):
-		# ## CALCULATE CLIP RESULT
-		var new_shapes:Array[ShapeWithHoles]
-		var updates:Array[GeometryData.GeometryUpdate] = []
-
-		var update = GeometryData.GeometryUpdate_SWH.new() #TODO: This update deletes all shapes and adds all new shapes. I should have clip_polygon to return a list of changed shapes only.
-
-		for swh in obj.geometry.shapes:
-			# Calculate clip results
-			var clipped = ShapeWithHoles.clip_polygon(swh, interpolated)
-
-			var filtered:Array[ShapeWithHoles]= []
-			for clipped_ms in clipped:
-				if PolyFuncs._calc_area(clipped_ms.solid) < 100:continue #Filter out very small pieces
-				filtered.append(clipped_ms)
-
-			new_shapes.append_array(filtered)
-
-			# Log geometry update events to update GameObject shapeData
-			update.removed.append(swh)
-			update.added.append_array(filtered)
-
-		updates.append(update)
-
-
-
-		# Log clipping operation event to update ChunkShape
-		update = GeometryData.GeometryUpdate_ChunkShape.new()
-		update.points = interpolated
-		updates.append(update)
-
-
-		# ANTI INVALID GEOMETRY SHIELD
-		# NO INVALID GEOMETRY BEYOND THIS POINT
-
-		# ## ASSIGN CLIP RESULT
-		if new_shapes.size() == 0:
+		if final.size() == 0:
 			#destroy_object(ws, obj, notifs)
 			return
 
-		#obj.multiShapes = new_shapes # Assigns new shape ideneity
-		var success = obj.geometry.update_geometry(updates) # Calculates updated chunkShape and ShapeWithHoles data
+		object.geometry.set_shape(final)
 		#if not success:
 		#	GameObject.renormalize_COM(obj)
 
 		# Manually recalculate all derived data
-		obj.physicsShape.update_collision_map(obj.geometry.chunkShape) # Updates collision shape 
-
-
-
-		#obj.physicsShape.update_inertiaData(WorldState.calculate_inertiaData(obj, ws.gameData))
-
-		#var notif = Presentation.notif_object_geometry_updated.new(obj)
-		#notifs.append(notif)
-
-
-
-static func intersect_object(ws:WorldState, obj:GameObject, interpolated:PackedVector2Array, notifs:Array[Presentation.notif]):
-		# ## CALCULATE CLIP RESULT
-		var new_shapes:Array[ShapeWithHoles]
-		var updates:Array[GeometryData.GeometryUpdate] = []
-
-		var update = GeometryData.GeometryUpdate_SWH.new() #TODO: This update deletes all shapes and adds all new shapes. I should have clip_polygon to return a list of changed shapes only.
-
-		for swh in obj.geometry.shapes:
-			# Calculate clip results
-			var clipped = ShapeWithHoles.intersect_polygon(swh, interpolated)
-
-			var filtered:Array[ShapeWithHoles]= []
-			for clipped_ms in clipped:
-				if PolyFuncs._calc_area(clipped_ms.solid) < 100:continue #Filter out very small pieces
-				filtered.append(clipped_ms)
-
-			new_shapes.append_array(filtered)
-
-			# Log geometry update events to update GameObject shapeData
-			update.removed.append(swh)
-			update.added.append_array(filtered)
-
-		updates.append(update)
-
-
-		'''
-		# Log clipping operation event to update ChunkShape
-		update = GeometryData.GeometryUpdate_ChunkShape.new()
-		update.points = interpolated
-		updates.append(update)
-		'''
-
-		# ANTI INVALID GEOMETRY SHIELD
-		# NO INVALID GEOMETRY BEYOND THIS POINT
-
-		# ## ASSIGN CLIP RESULT
-		if new_shapes.size() == 0:
-			#destroy_object(ws, obj, notifs)
-			return
-
-		#obj.multiShapes = new_shapes # Assigns new shape ideneity
-		var success = obj.geometry.update_geometry(updates) # Calculates updated chunkShape and ShapeWithHoles data
-		#if not success:
-		#	GameObject.renormalize_COM(obj)
-
-		# Manually recalculate all derived data
-		obj.physicsShape.update_collision_map(obj.geometry.chunkShape) # Updates collision shape 
-
-
+		object.physicsShape.update_collision_map(object.geometry.shape, shape) # Updates collision shape 
 
 		#obj.physicsShape.update_inertiaData(WorldState.calculate_inertiaData(obj, ws.gameData))
 
@@ -136,66 +50,6 @@ static func intersect_object(ws:WorldState, obj:GameObject, interpolated:PackedV
 
 
 
-
-
-
-
-static func extend_object(ws:WorldState, obj:GameObject, interpolated:PackedVector2Array, notifs:Array[Presentation.notif]):
-		# ## CALCULATE EXTEND RESULT
-		var new_shapes:Array[ShapeWithHoles]
-		var updates:Array[GeometryData.GeometryUpdate] = []
-
-		var update = GeometryData.GeometryUpdate_SWH.new() #TODO: This update deletes all shapes and adds all new shapes. I should have clip_polygon to return a list of changed shapes only.
-
-		for swh in obj.geometry.shapes:
-			# Calculate clip results
-			var merged = ShapeWithHoles.merge_polygon(swh, interpolated)
-
-			var filtered:Array[ShapeWithHoles]= []
-			for merged_swh in merged:
-				if PolyFuncs._calc_area(merged_swh.solid) < 100:continue #Filter out very small pieces
-				filtered.append(merged_swh)
-
-			new_shapes.append_array(filtered)
-
-			# Log geometry update events to update GameObject shapeData
-			update.removed.append(swh)
-			update.added.append_array(filtered)
-
-		updates.append(update)
-
-
-
-		# Log clipping operation event to update ChunkShape
-
-		update = GeometryData.GeometryUpdate_ChunkShape.new()
-		update.points = interpolated
-		update.operation = update.OP.EXTEND
-		updates.append(update)
-
-
-		# ANTI INVALID GEOMETRY SHIELD
-		# NO INVALID GEOMETRY BEYOND THIS POINT
-
-		# ## ASSIGN CLIP RESULT
-		if new_shapes.size() == 0:
-			#destroy_object(ws, obj, notifs)
-			return
-
-		#obj.multiShapes = new_shapes # Assigns new shape ideneity
-		var success = obj.geometry.update_geometry(updates) # Calculates updated chunkShape and ShapeWithHoles data
-		#if not success:
-		#	GameObject.renormalize_COM(obj)
-
-		# Manually recalculate all derived data
-		obj.physicsShape.update_collision_map(obj.geometry.chunkShape) # Updates collision shape 
-
-
-
-		#obj.physicsShape.update_inertiaData(WorldState.calculate_inertiaData(obj, ws.gameData))
-
-		#var notif = Presentation.notif_object_geometry_updated.new(obj)
-		#notifs.append(notif)
 
 
 
