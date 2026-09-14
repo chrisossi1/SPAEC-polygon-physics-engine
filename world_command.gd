@@ -22,7 +22,8 @@ class wc_clip_object:
 				result = object.geometry.shape.clip(incoming_clipShape)
 			OP.EXTEND:
 				incoming_clipShape.add_paths(object.geometry.shape.to_packed_paths())
-				result = incoming_clipShape.merge() #TODO: gdext clipper2 MERGE
+				result = incoming_clipShape.merge_contents() #TODO: gdext clipper2 MERGE
+				#result = object.geometry.shape.merge(incoming_clipShape)
 			OP.INTERSECT:
 				result = object.geometry.shape.intersect(incoming_clipShape)
 

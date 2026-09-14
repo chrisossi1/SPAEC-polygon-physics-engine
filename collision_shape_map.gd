@@ -9,6 +9,9 @@ class Cell:
 	var index:Vector2i
 	var shape: ClipShape
 	var cpolys: Array[CollisionPolygon2D] = []
+	#debug
+	var area:float
+	var cpoly_area_sum:float
 
 
 
@@ -18,24 +21,28 @@ func set_cell(idx:Vector2i, shape:ClipShape, body:RigidBody2D):
 	cell.index = idx
 	cell.shape = shape
 	
+	var sum:float = 0
 	for poly in punch_clipShape(shape):
 		var cpoly = _add_cpoly(body)
+		cpoly.cell = cell
 		cpoly.polygon = poly
 		cell.cpolys.append(cpoly)
+		var c = ClipShape.new()
+		c.add_path(cpoly.polygon)
+		sum += c.get_area()
 
 	cell_map[idx] = cell
+	
+	cell.area = shape.get_area()
+	cell.cpoly_area_sum = sum
+	assert( cell.cpoly_area_sum <= (chunk_size * chunk_size) )
 
 
 func remove_cell(idx:Vector2i):
 	assert(cell_map.has(idx))
 	var cell:Cell = cell_map[idx]
 	for cpoly in cell.cpolys:
-		cpoly.disabled = true
-		cpoly.visible = false
-		cpoly.polygon = PackedVector2Array()
-		cpolys.append(cpoly)
-
-
+		_remove_cpoly(cpoly)
 
 
 
@@ -79,7 +86,7 @@ func init_chunked(shape:ClipShape, body:RigidBody2D, size: float, _margin: float
 func update_local(shape:ClipShape, incoming:PackedVector2Array, body:RigidBody2D):
 	assert(chunk_size > 0)
 	var idxs_to_sync:Array[Vector2i] = rasterize_polygon_even_odd(incoming, chunk_size)
-	# Deduplicate?
+
 	var new_cpolys = []
 	for idx in idxs_to_sync:
 		_sync_index(shape, idx, body)
@@ -125,12 +132,21 @@ var cpolys:Array[CollisionPolygon2D] = []
 func _add_cpoly(body:RigidBody2D) -> CollisionPolygon2D:
 	if cpolys:
 		var cpoly:CollisionPolygon2D = cpolys.pop_front()
+		assert(cpoly.disabled)
 		cpoly.disabled = false
 		cpoly.visible = true
 		return cpoly
 	var cpoly:CollisionPolygon2D = cpoly_scene.instantiate()
 	body.add_child(cpoly)
 	return cpoly
+
+func _remove_cpoly(cpoly:CollisionPolygon2D):
+	assert(not(cpoly in cpolys))
+	assert(not cpoly.disabled)
+	cpoly.disabled = true
+	cpoly.visible = false
+	cpoly.polygon = PackedVector2Array()
+	cpolys.append(cpoly)
 
 
 
@@ -154,6 +170,7 @@ func _add_cpoly(body:RigidBody2D) -> CollisionPolygon2D:
 # #### GEOMETRY HELPERS #### #
 
 func punch_clipShape(shape:ClipShape) -> Array[PackedVector2Array]:
+
 	var solids:Array[PackedVector2Array] = []
 	var holes:Array[PackedVector2Array] = []
 	for path in shape.to_packed_paths():
@@ -162,10 +179,13 @@ func punch_clipShape(shape:ClipShape) -> Array[PackedVector2Array]:
 			continue
 		solids.append(path)
 	
+	return solids
+	
 	return _subtract_holes_from_solids(solids, holes, 99999999999.)
 
 
 #Todo: This creates uneccessary seams?
+# KEYHOLING
 static func _subtract_holes_from_solids(solids: Array[PackedVector2Array], holes: Array[PackedVector2Array], max_seam_length:float) -> Array[PackedVector2Array]:
 	## Removes hole polygons from solid polygons.
 	if holes.is_empty():

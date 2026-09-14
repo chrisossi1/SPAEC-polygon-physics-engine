@@ -23,6 +23,22 @@ var physicsShape:PhysicsShape
 
 
 
+static func initialize_object(o:GameObject, sbm:SolidBodyManager):
+	# Initialize object
+	# Initialize geometry
+	o.geometry = GeometryData.new()
+
+	# Initialize physicsShape
+	o.physicsShape = PhysicsShape.new()
+	o.physicsShape.object = o
+	o.physicsShape.body = sbm.get_body()
+	o.physicsShape.collisionMap = CollisionShapeMap.new()
+
+
+
+
+
+
 
 
 
