@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://ht8ubcip57mk" path="res://solid_body.gd" id="1_jyny1"]
 
 [node name="SolidBody" type="RigidBody2D"]
+mass = 20.0
 contact_monitor = true
 max_contacts_reported = 8
 script = ExtResource("1_jyny1")

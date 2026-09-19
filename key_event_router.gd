@@ -54,11 +54,13 @@ func key_event(event:KeyboardHandler.KeyEvent):
 		wc.control[0] = vector
 		worldCommand.add_command(wc)
 		return
-'''
+
+	'''
 	# Contextual input routing (Editor context)
 	if event.action in context.context_keys:
 		context.key_event(event)
 		return
+	'''
 
 	# General presentation interaction actions (Camera, dev hotkeys)
 	if event.pressed and event.action in key_actions.keys():
@@ -66,10 +68,6 @@ func key_event(event:KeyboardHandler.KeyEvent):
 
 # TODO: Presentation actions should be encapsulated as objects so they can be mapped arbitrarily to keyboard events
 # (like reaper)
-'''
-
-
-
 
 
 

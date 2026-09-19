@@ -24,5 +24,7 @@ window/size/viewport_height=920
 
 2d/run_on_separate_thread=true
 2d/default_gravity=0.0
-2d/default_linear_damp=0.00099999999999988
-2d/default_angular_damp=0.00499999999999989
+2d/default_linear_damp=0.0
+2d/default_angular_damp=0.0
+2d/sleep_threshold_linear=1.0
+2d/sleep_threshold_angular=0.017453292519943295

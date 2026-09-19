@@ -4,36 +4,56 @@ class_name WorldGenerator
 static func generate(ws:WorldState) -> Array[GameObject]:
 
 	var objs:Array[GameObject]
+	var player = gen_player(ws)
+	objs.append(player)
 
+	var helm:=HelmControl.new()
+	var thruster:=Thruster.new()
+	Component.IO.connect_io(helm.dataOutput, thruster.dataInput)
+	player.components.add(helm)
+	helm.attach_to_object(player)
+	player.components.add(thruster)
+	thruster.attach_to_object(player)
+
+	for i in range(100):
+		objs.append(gen_asteroid(ws))
+
+	return objs
+
+
+
+
+
+static func gen_player(ws:WorldState) -> GameObject:
 	# Set geometry
 	var x = Transform2D(PI/4,Vector2())
 	var poly := PolyFuncs._generate_regular_polygon(4, 100)
 	poly = x*poly	
+	var shape = ClipShape.new()
+	shape.add_path(poly)
+
+	var initData = GameObject.InitData.new("None", shape, PState.new())
+
+	var obj := GameObject.initialize_object(ws, initData)
+	GameObject.build_object(ws, obj)
+
+	return obj
+
+
+static func gen_asteroid(ws:WorldState) -> GameObject:
+	var sides = 5+randi_range(0,1)*2
+	var radius = randi_range(100,1000)
+	var poly = PolyFuncs._generate_regular_polygon(sides,radius)
 
 	var shape = ClipShape.new()
 	shape.add_path(poly)
 
-	var ps = PState.new()
+	var xform = Transform2D(randf()*2*PI, randf()*100000.*Vector2.RIGHT.rotated(randf()*2*PI))
+	var ps = PState.new(xform,Vector2(),.01)
 
-	#initData: PState, geometry, composition, name
-	var initData = GameObject.InitData.new("None", shape, ps)
-
+	var initData = GameObject.InitData.new("Asteroid", shape, ps)
 	var obj := GameObject.initialize_object(ws, initData)
-	objs.append(obj)
-
-	obj.geometry.set_shape(shape)
-
-
 	GameObject.build_object(ws, obj)
-	
-	
-	var helm:=HelmControl.new()
-	var thruster:=Thruster.new()
-	Component.IO.connect_io(helm.dataOutput, thruster.dataInput)
-	obj.components.add(helm)
-	helm.attach_to_object(obj)
-	obj.components.add(thruster)
-	thruster.attach_to_object(obj)
-	
 
-	return objs
+
+	return obj

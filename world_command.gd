@@ -14,9 +14,7 @@ class wc_generate_world:
 
 static func player_updated(worldState:WorldState, o:GameObject, notifs:Array[Presentation.notif]):
 		worldState.playerHelmControl = o.components.get_component(HelmControl.get_type())
-		var n = Presentation.notif_player_updated.new()
-		n.object = o
-		notifs.append(n)
+		notifs.append(Presentation.notif_player_updated.new(o))
 
 
 
@@ -129,6 +127,12 @@ class wc_pause:
 		return
 	func _init(a):pass
 
+
+class wc_pstate_refresh_all:
+	extends wc
+	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
+		for obj in worldState.objects:
+			notifs.append(Presentation.notif_pstate_update.new(obj.physicsShape.body))
 
 
 

@@ -29,3 +29,5 @@ func _process(_delta):
 
 func _physics_process(delta: float) -> void:
 	wc.add_command(WorldCommand.wc_physics_frame.new())
+	if Engine.get_physics_frames() % 128 == 0:
+		wc.add_command(WorldCommand.wc_pstate_refresh_all.new())

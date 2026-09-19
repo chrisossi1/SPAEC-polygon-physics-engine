@@ -41,5 +41,31 @@ func update_collision_map(shape:ClipShape, incoming:PackedVector2Array = []):
 
 
 
+# ## Body API
+
+func get_mass() -> float:
+	return body.mass
+
+
+func get_pstate() -> PState:
+	assert(body)
+	var pstate := PState.new()
+	pstate.transform = get_global_transform() #Todo: COM?
+	pstate.linear_velocity = body.linear_velocity #at COM
+	pstate.angular_velocity = body.angular_velocity
+	return pstate
+
+
+#func get_global_center_of_mass() -> Vector2:
+#	assert(body)
+#	return get_global_transform() * inertiaData.center_of_mass
+
+
+
 func get_global_transform() -> Transform2D:
-	return body.global_transform
+	assert(body)
+	return body.global_transform * transform
+
+func to_local(v:Vector2) -> Vector2:
+	assert(body)
+	return get_global_transform().affine_inverse() * v

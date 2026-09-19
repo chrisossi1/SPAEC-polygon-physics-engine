@@ -8,10 +8,11 @@ class_name Presentation
 
 # This notification is weird black-box wise because the camera2D needs the object body reference?
 class notif_player_updated:
-	extends notif
-	var object:GameObject
+	extends notif_object
 	func resolve(pres:Presentation):
-		pres.camera.target = object.physicsShape.body
+		pres.camera.target = pres.rmeshPool.get_render_mesh(object_id)
+		if not pres.camera.target:
+			return -1
 
 
 class notif_object_created:
@@ -101,6 +102,9 @@ func add_notification(n:notif):
 	notifications.append(n)
 
 func resolve_notifications():
+	var retry:Array[notif]=[]
 	for n in notifications:
-		n.resolve(self)
-	notifications = []
+		var success = n.resolve(self)
+		if success == -1:
+			retry.append(n)
+	notifications = retry

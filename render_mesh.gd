@@ -8,12 +8,13 @@ var t:float = 0.
 
 func update_pstate(_pstate:PState, _local_xform:Transform2D):
 	pstate = _pstate
-	_local_xform = _local_xform
+	local_xform = _local_xform
 	t = 0.
 
 
-func _process(delta):
+var pframe_duration = 1./Engine.physics_ticks_per_second
+func _process(_delta):
 	if not pstate:return
-	t += delta
-	var body_transform = pstate.project_transform(t)
+	t += _delta
+	var body_transform = pstate.project_transform(t-pframe_duration)
 	global_transform = local_xform * body_transform

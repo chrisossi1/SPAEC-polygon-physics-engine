@@ -70,10 +70,12 @@ static func build_object(ws:WorldState, o:GameObject):
 	o.physicsShape.object = o
 	o.physicsShape.body = ws.solidBodyManager.get_body(ws)
 	o.physicsShape.body.physicsShapes.append(o.physicsShape)
-	o.physicsShape.body.set_pstate(o.saved_pstate)
+	o.physicsShape.body.init_pstate(o.saved_pstate)
 	
 
 	o.physicsShape.collisionMap = CollisionShapeMap.new()
+	
+	await ws.solidBodyManager.get_tree().physics_frame
 	o.physicsShape.update_collision_map(o.geometry.shape)
 
 
