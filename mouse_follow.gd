@@ -1,6 +1,6 @@
 extends Node2D
 
-var _name = "Clip"
+var _name = "Boolean"
 
 
 var color = Color.RED
@@ -12,6 +12,7 @@ var poly:PackedVector2Array = poly_small
 var shape2D:= ConvexPolygonShape2D.new()
 
 @export var worldCommand:WorldCommand
+@export var camera:Camera2D
 
 
 func _draw():
@@ -21,15 +22,30 @@ func _draw():
 
 
 
+
+
+
+
+
+# #######		1. DETECT MOUSE EVENT
+
+# Setting flags
+
+var boolean_active:ACTIVE_TYPE = ACTIVE_TYPE.NONE
+enum ACTIVE_TYPE {NONE, CLIP, EXTEND, INTERSECT}
+
 func mouse_event(event:MouseHandler.MouseEvent):
 	match event.type:
 		event.PRESSED:
-			clip_active = ACTIVE_TYPE.EXTEND if event.button == MouseButton.MOUSE_BUTTON_LEFT else ACTIVE_TYPE.CLIP
+			boolean_active = ACTIVE_TYPE.EXTEND if event.button == MouseButton.MOUSE_BUTTON_LEFT else ACTIVE_TYPE.CLIP
 			poly = poly_small if event.button != MouseButton.MOUSE_BUTTON_LEFT else poly_large
 		event.RELEASED:
-			clip_active = ACTIVE_TYPE.NONE
+			boolean_active = ACTIVE_TYPE.NONE
 
 
+
+
+# #### Processing loop
 
 var prev_mouse_pos:Vector2 #Local to camera
 var mouse_pos:Vector2 #local to cameran
@@ -45,22 +61,20 @@ func _process(_delta):#_context_process(_delta):
 	prev_mouse_pos = mouse_pos
 	mouse_pos = get_global_mouse_position()
 	visible = false
-	if clip_active != ACTIVE_TYPE.NONE:
-		clip_under_mouse(clip_active)
+	if boolean_active != ACTIVE_TYPE.NONE:
+		boolean_under_mouse(boolean_active)
 
 
 
-var clip_active:ACTIVE_TYPE = ACTIVE_TYPE.NONE
-enum ACTIVE_TYPE {NONE, CLIP, EXTEND, INTERSECT}
 
 
-@export var camera:Camera2D
 
-func clip_under_mouse(op):
+func boolean_under_mouse(op):
 	visible = true
 	shape2D.points = get_interpolated_shape()
 	await get_tree().physics_frame
 	cut_shape(shape2D, op)
+
 
 func get_interpolated_shape() -> PackedVector2Array:
 	var delta = prev_mouse_pos - mouse_pos
@@ -98,7 +112,7 @@ func cut_shape(shape:Shape2D, op:ACTIVE_TYPE):
 		var body = obj.physicsShape.body
 
 
-		# ## CALCULATE CLIPPER GEOMETRY
+		# ## CALCULATE BOOLEAN PER GEOMETRY
 		var obj_transform = obj.physicsShape.get_global_transform()
 		var est_prev_origin = obj_transform.origin - (body.linear_velocity * interval) #Todo: What about off-axis physicsShapes that are rotating about COM?
 		var est_prev_rotation = obj_transform.get_rotation() - (body.angular_velocity * interval)
@@ -109,7 +123,7 @@ func cut_shape(shape:Shape2D, op:ACTIVE_TYPE):
 
 		var interpolated = Geometry2D.convex_hull(current_local_xform * poly + prev_local_xform * poly)
 
-		var wc = WorldCommand.wc_clip_object.new()
+		var wc = WorldCommand.wc_boolean_object.new()
 		wc.object = obj
 		wc.shape = interpolated
 		wc.op = wc.OP.CLIP if op == ACTIVE_TYPE.CLIP else wc.OP.EXTEND#EXTEND

@@ -15,7 +15,7 @@ class Cell:
 
 
 
-func set_cell(idx:Vector2i, shape:ClipShape, body:RigidBody2D):
+func set_cell(idx:Vector2i, shape:ClipShape, body:RigidBody2D, available_cpolys:Array=[]):
 	#assert(shape.size() > 0)
 	var cell = Cell.new()
 	cell.index = idx
@@ -23,7 +23,11 @@ func set_cell(idx:Vector2i, shape:ClipShape, body:RigidBody2D):
 	
 	var sum:float = 0
 	for poly in punch_clipShape(shape):
-		var cpoly = _add_cpoly(body)
+		var cpoly:CollisionPolygon2D
+		if available_cpolys:
+			cpoly = available_cpolys.pop_front()
+		else:
+			cpoly = _add_cpoly(body)
 		cpoly.cell = cell
 		cpoly.polygon = poly
 		cell.cpolys.append(cpoly)
@@ -77,7 +81,7 @@ func init_chunked(shape:ClipShape, body:RigidBody2D, size: float, _margin: float
 	for cx in range(min_cx, max_cx):
 		for cy in range(min_cy, max_cy):
 			var idx = Vector2i(cx,cy)
-			_sync_index(shape, idx, body)
+			_build_index(shape, idx, body)
 			new_cpolys.append_array(cell_map[idx].cpolys)
 
 	return new_cpolys
@@ -88,24 +92,36 @@ func update_local(shape:ClipShape, incoming:PackedVector2Array, body:RigidBody2D
 	var idxs_to_sync:Array[Vector2i] = rasterize_polygon_even_odd(incoming, chunk_size)
 
 	var new_cpolys = []
+	var to_delete = []
 	for idx in idxs_to_sync:
-		_sync_index(shape, idx, body)
+		if cell_map.has(idx):
+			to_delete.append_array(cell_map[idx].cpolys)
+	
+	for idx in idxs_to_sync:
+		_build_index(shape, idx, body, to_delete)
 		new_cpolys.append_array(cell_map[idx].cpolys)
+	
+	for cpoly in to_delete:
+		_remove_cpoly(cpoly)
 
 	return new_cpolys
 
 
 
 
-func _sync_index(shape:ClipShape, idx:Vector2i, body:RigidBody2D ):
+func _build_index(shape:ClipShape, idx:Vector2i, body:RigidBody2D, available_cpolys:Array=[]):
 	var rect_poly := _idx_cell_points(idx.x, idx.y, chunk_size, margin)
 	var rect_shape = ClipShape.new()
 	rect_shape.add_path(rect_poly)
 	var clipped := shape.intersect(rect_shape) # TODO: Empty result? Full result? tiny result? unchanged result?
 
-	if idx in cell_map:
-		remove_cell(idx)
-	set_cell(idx, clipped, body)
+	if shape.size() == 0:
+		cell_map.erase(idx)
+		return
+
+	#if idx in cell_map:
+	#	remove_cell(idx)
+	set_cell(idx, clipped, body, available_cpolys)
 
 
 
@@ -168,9 +184,89 @@ func _remove_cpoly(cpoly:CollisionPolygon2D):
 
 
 # #### GEOMETRY HELPERS #### #
+# Uses triangulation TDDO: Use convex decomposition
+func punch_clipShape(shape:ClipShape) -> Array:
+	var has_holes := false
+	var paths = shape.to_packed_paths()
+	for path in paths:
+		if GeometryData.is_hole(path):
+			has_holes = true
+			break
+	if not has_holes:
+		return paths
 
-func punch_clipShape(shape:ClipShape) -> Array[PackedVector2Array]:
+	var tris = shape.triangulate()
+	return mesh_arrays_to_triangles(tris)
 
+
+
+
+
+
+
+# Converts the Array returned by ClipShape.triangulate()
+# into an Array of PackedVector2Array triangles.
+func mesh_arrays_to_triangles(mesh_arrays: Array) -> Array[PackedVector2Array]:
+	var triangles: Array[PackedVector2Array] = []
+
+	if mesh_arrays.size() <= Mesh.ARRAY_VERTEX:
+		return triangles
+
+	var vertices: PackedVector2Array = mesh_arrays[Mesh.ARRAY_VERTEX]
+
+	if vertices.is_empty():
+		return triangles
+
+	# Indexed mesh.
+	if mesh_arrays.size() > Mesh.ARRAY_INDEX:
+		var indices: PackedInt32Array = mesh_arrays[Mesh.ARRAY_INDEX]
+
+		for i in range(0, indices.size() - 2, 3):
+			var ia: int = indices[i]
+			var ib: int = indices[i + 1]
+			var ic: int = indices[i + 2]
+
+			if (
+				ia < 0 or ia >= vertices.size()
+				or ib < 0 or ib >= vertices.size()
+				or ic < 0 or ic >= vertices.size()
+			):
+				push_warning("Skipping triangle with invalid vertex index.")
+				continue
+
+			var triangle := PackedVector2Array([
+				vertices[ia],
+				vertices[ib],
+				vertices[ic]
+			])
+
+			triangles.append(triangle)
+
+		return triangles
+
+	# Non-indexed fallback: every three vertices form one triangle.
+	for i in range(0, vertices.size() - 2, 3):
+		var triangle := PackedVector2Array([
+			vertices[i],
+			vertices[i + 1],
+			vertices[i + 2]
+		])
+
+		triangles.append(triangle)
+
+	return triangles
+
+
+
+
+
+
+
+
+
+
+# Uses keyholing
+func punch_clipShape_old(shape:ClipShape) -> Array[PackedVector2Array]:
 	var solids:Array[PackedVector2Array] = []
 	var holes:Array[PackedVector2Array] = []
 	for path in shape.to_packed_paths():
@@ -178,9 +274,7 @@ func punch_clipShape(shape:ClipShape) -> Array[PackedVector2Array]:
 			holes.append(path)
 			continue
 		solids.append(path)
-	
-	return solids
-	
+
 	return _subtract_holes_from_solids(solids, holes, 99999999999.)
 
 

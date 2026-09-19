@@ -15,7 +15,7 @@ var use_chunks = true
 
 
 
-# Update collision shapes in physics engine
+# Update or initialize collision shapes in physics engine
 func update_collision_map(shape:ClipShape, incoming:PackedVector2Array = []):
 	# Update collision polygons from chunk shape
 	var new_cpolys:Array

@@ -33,7 +33,6 @@ public:
     );
 
 
-	//Path64 get_path(int64_t index) const;
 
     void add_paths(
         const godot::Array &input,
@@ -63,6 +62,8 @@ public:
     Rect2 get_bounds(double scale = 1000.0) const;
 
 	double get_area(double scale = 1000.0) const;
+
+	Array triangulate(double scale = 1000.0) const;
 
 
 };

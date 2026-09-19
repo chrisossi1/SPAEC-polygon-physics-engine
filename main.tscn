@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://csl7lhn0c7yr4"]
+[gd_scene load_steps=12 format=3 uid="uid://csl7lhn0c7yr4"]
 
 [ext_resource type="Script" uid="uid://btbl7spmcgmyj" path="res://temp.gd" id="1_7mycd"]
 [ext_resource type="Script" uid="uid://f8nim3qysf1f" path="res://mouse_follow.gd" id="2_272bh"]
@@ -6,17 +6,23 @@
 [ext_resource type="Script" uid="uid://c0bx7vk1xuukh" path="res://mouse_handler.gd" id="4_kek77"]
 [ext_resource type="Script" uid="uid://c5x7vmnmold25" path="res://PhysicsBodyManager.gd" id="5_4c57u"]
 [ext_resource type="Script" uid="uid://dcnkhpywjrab" path="res://tst.gd" id="6_efxa6"]
-[ext_resource type="Script" uid="uid://doo6n03hy5cs4" path="res://world_generator.gd" id="7_272bh"]
+[ext_resource type="Script" uid="uid://bar7314yaf3pl" path="res://presentation.gd" id="8_5vw27"]
+[ext_resource type="Script" uid="uid://bbg62wx0dp1pa" path="res://follow_camera_2d.gd" id="9_4c57u"]
+[ext_resource type="Script" uid="uid://tx8ce3g0eirw" path="res://render_mesh_pool.gd" id="9_kek77"]
+[ext_resource type="Script" uid="uid://c1ssc88u6sjsw" path="res://key_event_router.gd" id="10_efxa6"]
+[ext_resource type="Script" uid="uid://bokxcg3iuvx6i" path="res://keyboard_handler.gd" id="11_dg77c"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_7mycd")
 
-[node name="Mousefollow" type="Node2D" parent="." node_paths=PackedStringArray("worldCommand")]
+[node name="Mousefollow" type="Node2D" parent="." node_paths=PackedStringArray("worldCommand", "camera")]
 script = ExtResource("2_272bh")
 worldCommand = NodePath("../WorldCommand")
+camera = NodePath("../Camera2D")
 
-[node name="WorldCommand" type="Node" parent="."]
+[node name="WorldCommand" type="Node" parent="." node_paths=PackedStringArray("pres")]
 script = ExtResource("3_5vw27")
+pres = NodePath("../Presentation")
 
 [node name="MouseHandler" type="Node2D" parent="."]
 script = ExtResource("4_kek77")
@@ -31,5 +37,22 @@ zoom = Vector2(0.3, 0.3)
 process_mode = 4
 script = ExtResource("6_efxa6")
 
-[node name="WorldGenerator" type="Node2D" parent="."]
-script = ExtResource("7_272bh")
+[node name="Presentation" type="Node2D" parent="."]
+script = ExtResource("8_5vw27")
+
+[node name="RenderMeshPool" type="Node2D" parent="Presentation"]
+script = ExtResource("9_kek77")
+
+[node name="Camera2D" type="Camera2D" parent="Presentation"]
+script = ExtResource("9_4c57u")
+
+[node name="KeyEventRouter" type="Node" parent="." node_paths=PackedStringArray("presentation", "worldCommand")]
+script = ExtResource("10_efxa6")
+presentation = NodePath("../Presentation")
+worldCommand = NodePath("../WorldCommand")
+metadata/_custom_type_script = "uid://c1ssc88u6sjsw"
+
+[node name="KeyboardHandler" type="Node" parent="." node_paths=PackedStringArray("keyEventRouter")]
+script = ExtResource("11_dg77c")
+keyEventRouter = NodePath("../KeyEventRouter")
+metadata/_custom_type_script = "uid://bokxcg3iuvx6i"

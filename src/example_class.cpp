@@ -3,6 +3,7 @@
 
 #include <clipper2/clipper.h>
 
+
 using namespace godot;
 using namespace Clipper2Lib;
 
@@ -69,6 +70,12 @@ void ClipShape::_bind_methods() {
     ClassDB::bind_method(
         D_METHOD("get_area", "scale"),
         &ClipShape::get_area,
+        DEFVAL(1000.0)
+    );
+
+    ClassDB::bind_method(
+        D_METHOD("triangulate", "scale"),
+        &ClipShape::triangulate,
         DEFVAL(1000.0)
     );
 
@@ -278,3 +285,134 @@ double ClipShape::get_area(double scale) const {
 	return Clipper2Lib::Area(paths) / (scale * scale);
 
 	}
+
+
+
+
+
+
+#include <godot_cpp/classes/mesh.hpp>
+#include <earcut.hpp>
+
+#include <cstdint>
+#include <functional>
+#include <vector>
+
+// Tell Mapbox Earcut how to read Clipper2 Point64.
+namespace mapbox {
+namespace util {
+
+template <>
+struct nth<0, Clipper2Lib::Point64> {
+    inline static int64_t get(const Clipper2Lib::Point64& p) {
+        return p.x;
+    }
+};
+
+template <>
+struct nth<1, Clipper2Lib::Point64> {
+    inline static int64_t get(const Clipper2Lib::Point64& p) {
+        return p.y;
+    }
+};
+
+} // namespace util
+} // namespace mapbox
+
+
+Array ClipShape::triangulate(double scale) const {
+    using namespace Clipper2Lib;
+
+    PackedVector2Array godot_vertices;
+    PackedInt32Array godot_indices;
+
+    PolyTree64 tree;
+    Clipper64 clipper;
+
+    clipper.AddSubject(this->paths);
+    clipper.Execute(
+        ClipType::Union,
+        FillRule::NonZero,
+        tree
+    );
+
+    uint32_t global_vertex_offset = 0;
+
+
+	using PolyNode = PolyPath64;
+
+	const auto triangulate_node =
+		[&](const PolyNode* node) {
+			std::vector<Path64> rings;
+
+			rings.push_back(node->Polygon());
+
+			// PolyPath children are std::unique_ptr<PolyPath64>.
+			for (const auto& child_ptr : *node) {
+				const PolyNode* child = child_ptr.get();
+
+				if (child->IsHole()) {
+					rings.push_back(child->Polygon());
+				}
+			}
+
+			if (rings.empty() || rings[0].size() < 3) {
+				return;
+			}
+
+			const uint32_t local_vertex_offset = global_vertex_offset;
+
+			for (const Path64& ring : rings) {
+				for (const Point64& point : ring) {
+					godot_vertices.push_back(Vector2(
+						static_cast<float>(point.x) /
+							static_cast<float>(scale),
+						static_cast<float>(point.y) /
+							static_cast<float>(scale)
+					));
+				}
+
+				global_vertex_offset += static_cast<uint32_t>(ring.size());
+			}
+
+			const std::vector<uint32_t> local_indices =
+				mapbox::earcut<uint32_t>(rings);
+
+			for (uint32_t index : local_indices) {
+				godot_indices.push_back(
+					static_cast<int32_t>(local_vertex_offset + index)
+				);
+			}
+		};
+
+	const std::function<void(const PolyNode*)> visit =
+		[&](const PolyNode* node) {
+			if (!node) {
+				return;
+			}
+
+			if (!node->IsHole()) {
+				triangulate_node(node);
+			}
+
+			// Recursively process islands nested inside holes.
+			for (const auto& child_ptr : *node) {
+				visit(child_ptr.get());
+			}
+		};
+
+	// PolyTree itself contains unique_ptr children.
+	for (const auto& root_child_ptr : tree) {
+		visit(root_child_ptr.get());
+	}
+
+
+
+    Array mesh_arrays;
+    mesh_arrays.resize(Mesh::ARRAY_MAX);
+    mesh_arrays[Mesh::ARRAY_VERTEX] = godot_vertices;
+    mesh_arrays[Mesh::ARRAY_INDEX] = godot_indices;
+
+    return mesh_arrays;
+}
+/// TODO: Hertel melhorn merge the triangulation to get chunk collision geometry
