@@ -7,11 +7,14 @@ var object:GameObject
 var collisionMap: = CollisionShapeMap.new()
 var body:SolidBody#PhysicsBody
 var physicsMaterial:PhysicsMaterial
-#var inertiaData:InertiaData
+var inertiaData:InertiaData
 var transform:Transform2D # Geometry origin relative to body origin
 
-var CHUNK_SIZE = 400
-var use_chunks = true
+var CHUNK_SIZE = 1000
+var use_chunks = true #TODO: Where should this be defined? This is like initialization data for the ChunkShape
+
+
+
 
 
 
@@ -35,6 +38,34 @@ func update_collision_map(shape:ClipShape, incoming:PackedVector2Array = []):
 
 
 
+func update_inertiaData(new_shape_data:InertiaData):
+	assert(new_shape_data.valid())
+
+	var old_shape_data := inertiaData
+	inertiaData = new_shape_data
+
+	var new_body_data := InertiaData.new()
+
+	# If 0 or 1 physicsShapes no need to compute compound properties
+	if true:#body.links.get_shapes().size() < 2: #TODO: Links size function
+		new_body_data.mass = new_shape_data.mass
+		new_body_data.center_of_mass = transform * new_shape_data.center_of_mass # Shift COM to body reference frame
+		new_body_data.moment = new_shape_data.moment
+
+	body.set_inertiaData(new_body_data)
+
+
+	if not old_shape_data:return
+
+	# Angular Momentum Conservation 
+	if new_shape_data.moment > old_shape_data.moment:
+		body.angular_velocity = body.angular_velocity * old_shape_data.moment/new_shape_data.moment
+
+	# Linear Momentum Conservation
+	#if new_shape_data.mass > old_shape_data.mass:
+	#	body.linear_velocity = body.linear_velocity * old_shape_data.mass/new_shape_data.mass
+
+
 
 
 
@@ -44,7 +75,7 @@ func update_collision_map(shape:ClipShape, incoming:PackedVector2Array = []):
 # ## Body API
 
 func get_mass() -> float:
-	return body.mass
+	return inertiaData.mass
 
 
 func get_pstate() -> PState:

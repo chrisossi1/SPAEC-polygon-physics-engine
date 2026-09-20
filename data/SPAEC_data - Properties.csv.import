@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cf235rsr75tlm"
+
+[deps]
+
+files=["res://data/SPAEC_data - Properties.Property.translation", "res://data/SPAEC_data - Properties.Amount.translation", "res://data/SPAEC_data - Properties.(Auto) Prefix.translation", "res://data/SPAEC_data - Properties.(Auto) Name.translation", "res://data/SPAEC_data - Properties.Name.translation", "res://data/SPAEC_data - Properties.Form.translation", "res://data/SPAEC_data - Properties.Property.translation", "res://data/SPAEC_data - Properties.Amount.translation"]
+
+source_file="res://data/SPAEC_data - Properties.csv"
+dest_files=["res://data/SPAEC_data - Properties.Property.translation", "res://data/SPAEC_data - Properties.Amount.translation", "res://data/SPAEC_data - Properties.(Auto) Prefix.translation", "res://data/SPAEC_data - Properties.(Auto) Name.translation", "res://data/SPAEC_data - Properties.Name.translation", "res://data/SPAEC_data - Properties.Form.translation", "res://data/SPAEC_data - Properties.Property.translation", "res://data/SPAEC_data - Properties.Amount.translation"]
+
+[params]
+
+compress=true
+delimiter=0

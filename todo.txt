@@ -1,0 +1,9 @@
+UNIFYING RENDER SYNC:
+	
+	Periodic sync
+	nonlinear
+	
+	also needed at:
+		Geometry update (Axis of rotation update specifically)
+		PShape move within solidbody
+		body ownership updated

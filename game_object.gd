@@ -12,8 +12,70 @@ var saved_pstate:PState
 
 
 
-class Components:
 
+class InitData:
+	var shape:ClipShape
+	var name:String
+	var pstate:PState
+	func _init(n:String,s:ClipShape,p:PState):
+		name = n
+		shape = s
+		pstate = p
+
+
+static func initialize_object(ws:WorldState, i:InitData) -> GameObject:
+	# Initialize object
+	# Initialize geometry
+	var o = GameObject.new()
+	o.name = i.name
+	o.geometry = GeometryData.new()  
+	o.geometry.shape = i.shape
+	o.saved_pstate = i.pstate
+	o.components = Components.new(o)
+	o.id = ws.get_uuid()
+	ws.objects.append(o)
+	
+	return o
+
+
+# Builds the object in a standalone body
+static func build_object(ws:WorldState, o:GameObject):
+	assert(o.geometry)
+	assert(o.geometry.shape)
+	o.geometry.contour = GeometryData.calculate_contour(o.geometry.shape)
+
+	# Initialize physicsShape
+	o.physicsShape = PhysicsShape.new()
+	o.physicsShape.object = o
+	o.physicsShape.body = ws.solidBodyManager.get_body(ws)
+	o.physicsShape.body.physicsShapes.append(o.physicsShape)
+	o.physicsShape.body.init_pstate(o.saved_pstate)
+	
+
+	o.physicsShape.collisionMap = CollisionShapeMap.new()
+	
+	#await ws.solidBodyManager.get_tree().physics_frame
+	o.physicsShape.update_collision_map(o.geometry.shape)
+
+	var new_data = calculate_inertiaData(o)
+	o.physicsShape.update_inertiaData(new_data)
+
+
+
+
+static func calculate_inertiaData(o:GameObject):
+	var data = InertiaData.new()
+	data.mass = o.geometry.contour.area
+	data.moment = o.geometry.contour.get_moment_factor_about_com()
+	data.center_of_mass = o.geometry.contour.centroid
+
+	return data
+
+
+
+
+
+class Components:
 	var _owner: GameObject
 	var _data: Dictionary = {}
 	func _init(owner: GameObject) -> void:
@@ -34,54 +96,6 @@ class Components:
 		return _data.get(type)
 	func get_components() -> Array:
 		return _data.values()
-
-
-class InitData:
-	var shape:ClipShape
-	var name:String
-	var pstate:PState
-	func _init(n:String,s:ClipShape,p:PState):
-		name = n
-		shape = s
-		pstate = p
-
-
-static func initialize_object(ws:WorldState, i:InitData) -> GameObject:
-	# Initialize object
-	# Initialize geometry
-	var o = GameObject.new()
-	o.name = i.name
-	o.geometry = GeometryData.new()
-	o.geometry.shape = i.shape
-	o.saved_pstate = i.pstate
-	o.components = Components.new(o)
-	o.id = ws.get_uuid()
-	ws.objects.append(o)
-	
-	return o
-
-
-# Builds the object in a standalone body
-static func build_object(ws:WorldState, o:GameObject):
-	assert(o.geometry)
-	assert(o.geometry.shape)
-	# Initialize physicsShape
-	o.physicsShape = PhysicsShape.new()
-	o.physicsShape.object = o
-	o.physicsShape.body = ws.solidBodyManager.get_body(ws)
-	o.physicsShape.body.physicsShapes.append(o.physicsShape)
-	o.physicsShape.body.init_pstate(o.saved_pstate)
-	
-
-	o.physicsShape.collisionMap = CollisionShapeMap.new()
-	
-	await ws.solidBodyManager.get_tree().physics_frame
-	o.physicsShape.update_collision_map(o.geometry.shape)
-
-
-
-
-
 
 
 

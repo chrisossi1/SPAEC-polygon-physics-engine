@@ -1,0 +1,10 @@
+Name,Boolean,Opposite
+dense,,light
+strong,,weak
+flexible,,brittle
+magnetic,1,
+radioactive,1,
+transluscent,,
+shiny,,
+sticky,,
+test_property_to_make_sure_all_columns_are_included,1,

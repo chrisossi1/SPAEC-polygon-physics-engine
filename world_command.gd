@@ -54,9 +54,12 @@ class wc_boolean_object:
 			#destroy_object(ws, obj, notifs)
 			return
 
-		object.geometry.set_shape(final)
+		object.geometry.shape = final
 		#if not success:
 		#	GameObject.renormalize_COM(obj)
+		object.geometry.contour = GeometryData.calculate_contour(object.geometry.shape)
+		var new_data = GameObject.calculate_inertiaData(object)
+		object.physicsShape.update_inertiaData(new_data)
 
 		# Manually recalculate all derived data
 		object.physicsShape.update_collision_map(object.geometry.shape, shape) # Updates collision shape 

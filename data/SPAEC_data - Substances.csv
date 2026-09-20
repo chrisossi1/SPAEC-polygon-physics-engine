@@ -1,0 +1,35 @@
+Name,Description,Dominant Form,Type
+Oracle,Ancient temporal material,Solid,Archaeological
+Informata,Condensed ancient data storage,Solid,Archaeological
+Nullformata,Cleared ancient data storage,Solid,Archaeological
+Neuromatter,Computational biomatter,Solid,Biomatter
+Bioresin,Sticky waste biomatter,Solid,Biomatter
+Agarium,Solid gel biomatter,Solid,Biomatter
+Organizational Tissue,Unpredictable intelligent biomatter,Solid,Biomatter
+Dead Biomatter,Decaying rotten flesh,Solid,Biomatter
+Biochitin,Natural animal shell,Solid,Biomatter
+Pulp,someone got pulped,Slurry,Biofluid
+Glass,Brittle transparent material,Solid,Ceramic
+Quartzium,Durable transparent material,Solid,Ceramic
+Water,h2o,Liquid,Basic Fluid
+Aethenol,alcolhol,Liquid,Basic Fluid
+Accretium,Rare black hole product,Solid,Exotic
+Singularity,Ultra dense rare black hole product,Solid,Exotic
+Aether,Rare ultra light material,Solid,Exotic
+Persistent Shield Residue,Energy shields artifacts that will not dematerialize,Solid,Exotic
+Neutronium,Ultra dense material,Solid,Other
+Polycarbonate,Light plastic material,Solid,Plastic
+Silicate,Common silicon rock,Solid,Rock
+Carbonate,Common carbon rock,Solid,Rock
+Ferrous Ore,Magenetic metal ore,Solid,Rock
+Lumite Ore,Light metal ore,Solid,Rock
+Wolfram Ore,Heavy metal ore,Solid,Rock
+Embrium Ore,Rare metal ore,Solid,Rock
+Uranium Ore,Radioactive metal ore,Solid,Rock
+Ferrosteel,Magnetic metal,Solid,Steel
+Lumisteel,Light metal,Solid,Steel
+Wolfsteel,Heavy metal,Solid,Steel
+Emsteel,Rare metal,Solid,Steel
+Uranium Steel,Radioactive metal,Solid,Steel
+Undefined Metallurgic Output,Unstable Invalid material synthesis result,Solid,Steel
+Homogenized Scrapium,Ancient scrap compacted,Solid,Steel

@@ -8,5 +8,4 @@
 script = ExtResource("1_gcb8y")
 
 [node name="MeshInstance2D" type="MeshInstance2D" parent="."]
-modulate = Color(1, 0.49019608, 1, 0.54509807)
 mesh = SubResource("ArrayMesh_i6g1m")

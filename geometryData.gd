@@ -4,13 +4,6 @@ var shape:ClipShape
 var contour:ContourData
 
 
-# Todo: Queue updates for tick
-func set_shape(new_shape:ClipShape):
-	shape = new_shape
-	contour = calculate_contour(shape)
-
-
-
 
 
 static func calculate_contour(shape:ClipShape) -> ContourData:

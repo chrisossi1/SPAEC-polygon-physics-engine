@@ -21,7 +21,7 @@ func set_cell(idx:Vector2i, shape:ClipShape, body:RigidBody2D, available_cpolys:
 	cell.index = idx
 	cell.shape = shape
 	
-	var sum:float = 0
+	#var sum:float = 0
 	for poly in punch_clipShape(shape):
 		var cpoly:CollisionPolygon2D
 		if available_cpolys:
@@ -31,15 +31,16 @@ func set_cell(idx:Vector2i, shape:ClipShape, body:RigidBody2D, available_cpolys:
 		cpoly.cell = cell
 		cpoly.polygon = poly
 		cell.cpolys.append(cpoly)
-		var c = ClipShape.new()
-		c.add_path(cpoly.polygon)
-		sum += c.get_area()
+		#var c = ClipShape.new()
+		#c.add_path(cpoly.polygon)
+		#sum += c.get_area()
 
 	cell_map[idx] = cell
 	
-	cell.area = shape.get_area()
-	cell.cpoly_area_sum = sum
-	assert( cell.cpoly_area_sum <= (chunk_size * chunk_size) )
+	#if chunk_size > 0:
+	#	cell.area = shape.get_area()
+	#	cell.cpoly_area_sum = sum
+	#	assert( cell.cpoly_area_sum <= (chunk_size * chunk_size) )
 
 
 func remove_cell(idx:Vector2i):
@@ -53,12 +54,30 @@ func remove_cell(idx:Vector2i):
 
 
 
-
+# Whole shape is treated as one cell
 func init_unchunked(shape:ClipShape, body:RigidBody2D):
 	chunk_size = -1
 	margin = -1
 
+	var new_cpolys = []
+
 	set_cell(Vector2i(), shape, body)
+	new_cpolys.append_array(cell_map[Vector2i()].cpolys)
+	
+	return new_cpolys
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -88,13 +107,16 @@ func init_chunked(shape:ClipShape, body:RigidBody2D, size: float, _margin: float
 
 
 func update_local(shape:ClipShape, incoming:PackedVector2Array, body:RigidBody2D):
-	assert(chunk_size > 0)
-	var idxs_to_sync:Array[Vector2i] = rasterize_polygon_even_odd(incoming, chunk_size)
+	var idxs_to_sync:Array[Vector2i]
+	if chunk_size < 0:#unchunked
+		idxs_to_sync = [Vector2i()]
+	else:
+		idxs_to_sync = rasterize_polygon_even_odd(incoming, chunk_size)
 
 	var new_cpolys = []
 	var to_delete = []
 	for idx in idxs_to_sync:
-		if cell_map.has(idx):
+		if cell_map.has(idx): #Clear all existing cells
 			to_delete.append_array(cell_map[idx].cpolys)
 	
 	for idx in idxs_to_sync:
@@ -108,12 +130,15 @@ func update_local(shape:ClipShape, incoming:PackedVector2Array, body:RigidBody2D
 
 
 
-
 func _build_index(shape:ClipShape, idx:Vector2i, body:RigidBody2D, available_cpolys:Array=[]):
-	var rect_poly := _idx_cell_points(idx.x, idx.y, chunk_size, margin)
-	var rect_shape = ClipShape.new()
-	rect_shape.add_path(rect_poly)
-	var clipped := shape.intersect(rect_shape) # TODO: Empty result? Full result? tiny result? unchanged result?
+	var clipped:ClipShape
+	if chunk_size < 0:
+		clipped = shape
+	else:
+		var rect_poly := _idx_cell_points(idx.x, idx.y, chunk_size, margin)
+		var rect_shape = ClipShape.new()
+		rect_shape.add_path(rect_poly)
+		clipped = shape.intersect(rect_shape) # TODO: Empty result? Full result? tiny result? unchanged result?
 
 	if shape.size() == 0:
 		cell_map.erase(idx)
@@ -185,7 +210,7 @@ func _remove_cpoly(cpoly:CollisionPolygon2D):
 
 # #### GEOMETRY HELPERS #### #
 # Uses triangulation TDDO: Use convex decomposition
-func punch_clipShape(shape:ClipShape) -> Array:
+func punch_clipShape_tri(shape:ClipShape) -> Array:
 	var has_holes := false
 	var paths = shape.to_packed_paths()
 	for path in paths:
@@ -263,10 +288,10 @@ func mesh_arrays_to_triangles(mesh_arrays: Array) -> Array[PackedVector2Array]:
 
 
 
-
+var max_seam_length = 999999.
 
 # Uses keyholing
-func punch_clipShape_old(shape:ClipShape) -> Array[PackedVector2Array]:
+func punch_clipShape(shape:ClipShape) -> Array[PackedVector2Array]:
 	var solids:Array[PackedVector2Array] = []
 	var holes:Array[PackedVector2Array] = []
 	for path in shape.to_packed_paths():
@@ -274,8 +299,25 @@ func punch_clipShape_old(shape:ClipShape) -> Array[PackedVector2Array]:
 			holes.append(path)
 			continue
 		solids.append(path)
-
-	return _subtract_holes_from_solids(solids, holes, 99999999999.)
+	
+	var solid_shape = ClipShape.new()
+	solid_shape.add_paths(solids)
+	
+	var holes_shape := ClipShape.new()
+	for hole in holes:
+		# Add seam to hole to avoid ccw holes
+		var seam := PackedVector2Array([hole[0], hole[0] + Vector2(max_seam_length, 0)])
+		var seam_poly := Geometry2D.offset_polyline(seam, .02)
+		var hole_and_seam_poly := Geometry2D.merge_polygons(hole, seam_poly[0])[0]
+		holes_shape.add_path(hole_and_seam_poly)
+		#TODO: Only for solids overlapping the original solid, no seams
+	
+	var clipped = solid_shape.clip(holes_shape)
+	var result:Array[PackedVector2Array] = []
+	for path in clipped.to_packed_paths():
+		assert (not GeometryData.is_hole(path))
+		result.append(path)
+	return result
 
 
 #Todo: This creates uneccessary seams?

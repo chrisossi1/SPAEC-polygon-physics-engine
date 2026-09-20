@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bmtt0pdu8rae4"
+
+[deps]
+
+files=["res://data/SPAEC_data - Substances.Description.translation", "res://data/SPAEC_data - Substances.Dominant Form.translation", "res://data/SPAEC_data - Substances.Type.translation"]
+
+source_file="res://data/SPAEC_data - Substances.csv"
+dest_files=["res://data/SPAEC_data - Substances.Description.translation", "res://data/SPAEC_data - Substances.Dominant Form.translation", "res://data/SPAEC_data - Substances.Type.translation"]
+
+[params]
+
+compress=true
+delimiter=0

@@ -27,8 +27,8 @@ static func generate(ws:WorldState) -> Array[GameObject]:
 static func gen_player(ws:WorldState) -> GameObject:
 	# Set geometry
 	var x = Transform2D(PI/4,Vector2())
-	var poly := PolyFuncs._generate_regular_polygon(4, 100)
-	poly = x*poly	
+	var poly := PolyFuncs._generate_regular_polygon(4, 25)
+	poly = x*poly
 	var shape = ClipShape.new()
 	shape.add_path(poly)
 
@@ -42,13 +42,15 @@ static func gen_player(ws:WorldState) -> GameObject:
 
 static func gen_asteroid(ws:WorldState) -> GameObject:
 	var sides = 5+randi_range(0,1)*2
-	var radius = randi_range(100,1000)
+	var radius = randi_range(25,250)
 	var poly = PolyFuncs._generate_regular_polygon(sides,radius)
+
+	#poly = Transform2D(0,Vector2.RIGHT* 100) * poly # Test off-origin COM
 
 	var shape = ClipShape.new()
 	shape.add_path(poly)
 
-	var xform = Transform2D(randf()*2*PI, randf()*100000.*Vector2.RIGHT.rotated(randf()*2*PI))
+	var xform = Transform2D(randf()*2*PI, randf()*25000.*Vector2.RIGHT.rotated(randf()*2*PI))
 	var ps = PState.new(xform,Vector2(),.01)
 
 	var initData = GameObject.InitData.new("Asteroid", shape, ps)

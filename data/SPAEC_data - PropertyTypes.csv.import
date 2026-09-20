@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://db5h36i5wd1gn"
+
+[deps]
+
+files=["res://data/SPAEC_data - PropertyTypes.Boolean.translation", "res://data/SPAEC_data - PropertyTypes.Opposite.translation"]
+
+source_file="res://data/SPAEC_data - PropertyTypes.csv"
+dest_files=["res://data/SPAEC_data - PropertyTypes.Boolean.translation", "res://data/SPAEC_data - PropertyTypes.Opposite.translation"]
+
+[params]
+
+compress=true
+delimiter=0

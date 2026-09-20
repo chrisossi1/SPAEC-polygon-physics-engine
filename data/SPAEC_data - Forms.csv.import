@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cif6351latifc"
+
+[deps]
+
+files=["res://data/SPAEC_data - Forms.Form.translation", "res://data/SPAEC_data - Forms.Name.translation", "res://data/SPAEC_data - Forms.Color desc.translation", "res://data/SPAEC_data - Forms.Color.translation", "res://data/SPAEC_data - Forms.#Forms.translation", "res://data/SPAEC_data - Forms.Name.translation", "res://data/SPAEC_data - Forms.Phase.translation"]
+
+source_file="res://data/SPAEC_data - Forms.csv"
+dest_files=["res://data/SPAEC_data - Forms.Form.translation", "res://data/SPAEC_data - Forms.Name.translation", "res://data/SPAEC_data - Forms.Color desc.translation", "res://data/SPAEC_data - Forms.Color.translation", "res://data/SPAEC_data - Forms.#Forms.translation", "res://data/SPAEC_data - Forms.Name.translation", "res://data/SPAEC_data - Forms.Phase.translation"]
+
+[params]
+
+compress=true
+delimiter=0

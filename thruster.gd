@@ -16,7 +16,7 @@ func _init():
 	params = Parameters.new()
 	params.acceleration = 1
 	params.brakeAcceleration = 1
-	params.max_impulse = 10000000
+	params.max_impulse = 100000000000 #Max load rating
 	params.max_speed = 10000
 
 func attach_to_object(o:GameObject):
@@ -37,6 +37,7 @@ func physics_process():#_delta):
 	if not dataStore.contents:return
 	#pshape.body.apply_central_force(pshape.body.mass * 200*control)
 	linear_2nd_state(params, self)
+	angular(self)
 
 
 var params:Parameters

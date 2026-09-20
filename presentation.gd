@@ -10,7 +10,8 @@ class_name Presentation
 class notif_player_updated:
 	extends notif_object
 	func resolve(pres:Presentation):
-		pres.camera.target = pres.rmeshPool.get_render_mesh(object_id)
+		var rmesh := pres.rmeshPool.get_render_mesh(object_id)
+		pres.camera.target = rmesh
 		if not pres.camera.target:
 			return -1
 
@@ -61,7 +62,7 @@ class notif_pstate_update:
 	var local_xforms:Array[Transform2D]=[]
 	var pstate:PState
 	func _init(body:SolidBody):
-		pstate = body.get_pstate()
+		pstate = body.get_axis_pstate()
 		for pshape in body.get_physicssShapes():
 			var obj:GameObject = pshape.object
 			ids.append(obj.id)
