@@ -1,6 +1,8 @@
 extends RigidBody2D
 class_name SolidBody
 
+var space:PhysicsSpace
+
 var previous_velocity:Vector2
 var previous_angular_velocity:float
 
@@ -17,6 +19,7 @@ func on_sleeping_state_changed():
 func set_pstate(ps:PState):
 	assert(not pending_pstate)
 	pending_pstate = ps
+	sleeping = false
 
 func init_pstate(ps:PState):
 	transform = ps.transform
@@ -49,10 +52,20 @@ func get_physicssShapes():
 	return physicsShapes
 
 
-
+# In physEngine coordinates
 func get_axis_pstate():
 	var ps = PState.axis_PState.new(global_transform)
 	ps.axis = center_of_mass
+	if not sleeping:
+		ps.angular_velocity = angular_velocity
+		ps.linear_velocity = linear_velocity
+	
+	return ps
+
+
+# In physEngine coordinates
+func get_pstate():
+	var ps = PState.new(global_transform)
 	if not sleeping:
 		ps.angular_velocity = angular_velocity
 		ps.linear_velocity = linear_velocity

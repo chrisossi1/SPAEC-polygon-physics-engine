@@ -13,7 +13,7 @@ var shape2D:= ConvexPolygonShape2D.new()
 
 @export var worldCommand:WorldCommand
 @export var camera:Camera2D
-
+var simManager:SimManager
 
 func _draw():
 	draw_colored_polygon(Transform2D(0,mouse_pos)*poly, color)
@@ -59,7 +59,7 @@ func _process(_delta):#_context_process(_delta):
 	elapsed = 0.
 
 	prev_mouse_pos = mouse_pos
-	mouse_pos = get_global_mouse_position()
+	mouse_pos = get_global_mouse_position() # In game coodrdinates
 	visible = false
 	if boolean_active != ACTIVE_TYPE.NONE:
 		boolean_under_mouse(boolean_active)
@@ -92,7 +92,7 @@ func cut_shape(shape:Shape2D, op:ACTIVE_TYPE):
 
 	var overlap_query = PhysicsShapeQueryParameters2D.new()
 	overlap_query.shape = shape
-	overlap_query.transform = global_mouse_transform
+	overlap_query.transform = simManager.space.to_physEngine_transform(global_mouse_transform)
 
 	var overlaps = get_world_2d().direct_space_state.intersect_shape(overlap_query)
 

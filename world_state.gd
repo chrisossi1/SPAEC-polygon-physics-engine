@@ -11,9 +11,10 @@ var time:float
 
 # World entities
 var objects:Array[GameObject] = []
+var has_components:Array[GameObject] = []
 
 var solidBodyManager:SolidBodyManager #Used to add new bodies to physicsState
-
+var chunkMap:=ChunkMap.new()
 
 
 
@@ -31,17 +32,3 @@ var uuid_index:int = -1
 func get_uuid():
 	uuid_index += 1
 	return uuid_index
-
-
-
-
-var events:=Events.new()
-
-
-class Events:
-	var wc:WorldCommand
-	func _on_pstate_updated(body:SolidBody):
-		var command = WorldCommand.event_body_pstate_updated.new()
-		command.body = body
-		wc.add_command(command)
-	#func _on_contact()

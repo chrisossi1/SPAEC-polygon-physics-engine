@@ -1,66 +1,65 @@
 class_name GameObject
 
+# UNREGISTERED
 var name := ""
-var id:int
-var geometry:GeometryData
-
-var physicsShape:PhysicsShape
-
+var shape:ClipShape
 var components:Components
-
 var saved_pstate:PState
 
+# REGISTERED
+var id:int
+
+# BUILT
+var geometry:GeometryData
+var physicsShape:PhysicsShape
+
+
+var state:STATE=STATE.UNREGISTERED
+
+enum STATE {UNREGISTERED, REGISTERED, BUILT, ACTIVE}
 
 
 
-class InitData:
-	var shape:ClipShape
-	var name:String
-	var pstate:PState
-	func _init(n:String,s:ClipShape,p:PState):
-		name = n
-		shape = s
-		pstate = p
 
 
-static func initialize_object(ws:WorldState, i:InitData) -> GameObject:
-	# Initialize object
-	# Initialize geometry
-	var o = GameObject.new()
-	o.name = i.name
-	o.geometry = GeometryData.new()  
-	o.geometry.shape = i.shape
-	o.saved_pstate = i.pstate
-	o.components = Components.new(o)
+
+static func register_object(ws:WorldState, o:GameObject):
+	assert(o.state == GameObject.STATE.UNREGISTERED)
+	o.state = GameObject.STATE.REGISTERED
 	o.id = ws.get_uuid()
 	ws.objects.append(o)
+	ws.chunkMap.save_object(o)
+	if o.components:
+		ws.has_components.append(o)
+
+
+# Builds the object in a standalone body. Todo: Pass in a Body argument
+static func build_object(o:GameObject, body:SolidBody):
+	assert(o.state == GameObject.STATE.REGISTERED)
+	o.state = GameObject.STATE.BUILT
 	
-	return o
+	# Calculate geometry
+	o.geometry = GeometryData.new() # TODO: 2 many extra layers ??
+	o.geometry.contour = GeometryData.calculate_contour(o.shape)
 
-
-# Builds the object in a standalone body
-static func build_object(ws:WorldState, o:GameObject):
-	assert(o.geometry)
-	assert(o.geometry.shape)
-	o.geometry.contour = GeometryData.calculate_contour(o.geometry.shape)
-
-	# Initialize physicsShape
-	o.physicsShape = PhysicsShape.new()
-	o.physicsShape.object = o
-	o.physicsShape.body = ws.solidBodyManager.get_body(ws)
+	# Initialize physicsShape + body
+	o.physicsShape = PhysicsShape.new(o)
+	o.physicsShape.body = body
 	o.physicsShape.body.physicsShapes.append(o.physicsShape)
-	o.physicsShape.body.init_pstate(o.saved_pstate)
-	
+	var transformed_pstate = o.saved_pstate.duplicate()
+	transformed_pstate.transform = body.space.to_physEngine_transform(o.saved_pstate.transform)
+	o.physicsShape.body.init_pstate(transformed_pstate)
 
 	o.physicsShape.collisionMap = CollisionShapeMap.new()
-	
-	#await ws.solidBodyManager.get_tree().physics_frame
-	o.physicsShape.update_collision_map(o.geometry.shape)
+	o.physicsShape.update_collision_map(o.shape)
 
 	var new_data = calculate_inertiaData(o)
 	o.physicsShape.update_inertiaData(new_data)
 
-
+	if o.components:
+		for component in o.components.get_components():
+			component = component as Component
+			component.attach_to_object(o)
 
 
 static func calculate_inertiaData(o:GameObject):
@@ -76,8 +75,8 @@ static func calculate_inertiaData(o:GameObject):
 
 
 class Components:
-	var _owner: GameObject
 	var _data: Dictionary = {}
+	var _owner: GameObject
 	func _init(owner: GameObject) -> void:
 		_owner = owner
 	func add(component: Component) -> void:
@@ -85,7 +84,7 @@ class Components:
 		if _data.has(type):
 			remove(_data[type])
 		_data[type] = component
-		component.attach_to_object(_owner)
+		#component.attach_to_object(_owner) #Only called upon building!
 	func remove(component: Component) -> void:
 		var type := component.get_type()
 		if _data.get(type) != component:
@@ -109,6 +108,6 @@ static func from_query_result(result:Dictionary) -> GameObject:
 	if not cpoly:return
 	assert(cpoly is CollisionPolygon2D_)
 	cpoly = cpoly as CollisionPolygon2D_
-	var obj = cpoly.physicsShape.object
+	var obj = cpoly.physicsShape._owner
 	assert(obj)
 	return obj

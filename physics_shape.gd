@@ -2,7 +2,10 @@ class_name PhysicsShape
 
 ''' Is physicsShape an API to the physics engine or does it store data? can it do both? '''
 
-var object:GameObject
+
+var _owner: GameObject
+func _init(owner: GameObject) -> void:
+	_owner = owner
 
 var collisionMap: = CollisionShapeMap.new()
 var body:SolidBody#PhysicsBody
@@ -11,7 +14,7 @@ var inertiaData:InertiaData
 var transform:Transform2D # Geometry origin relative to body origin
 
 var CHUNK_SIZE = 1000
-var use_chunks = true #TODO: Where should this be defined? This is like initialization data for the ChunkShape
+var use_chunks = false #TODO: Where should this be defined? This is like initialization data for the ChunkShape
 
 
 
@@ -95,7 +98,7 @@ func get_pstate() -> PState:
 
 func get_global_transform() -> Transform2D:
 	assert(body)
-	return body.global_transform * transform
+	return body.space.to_game_transform( body.global_transform * transform )
 
 func to_local(v:Vector2) -> Vector2:
 	assert(body)

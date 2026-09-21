@@ -3,21 +3,6 @@ class_name WorldCommand
 
 class wc:pass
 
-class wc_generate_world:
-	extends wc
-	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
-		var objs = WorldGenerator.generate(worldState)
-		WorldCommand.player_updated(worldState, objs[0], notifs)
-		for o in objs:
-			notifs.append(Presentation.notif_object_created.new(o))
-
-
-static func player_updated(worldState:WorldState, o:GameObject, notifs:Array[Presentation.notif]):
-		worldState.playerHelmControl = o.components.get_component(HelmControl.get_type())
-		notifs.append(Presentation.notif_player_updated.new(o))
-
-
-
 
 
 
@@ -28,7 +13,7 @@ class wc_boolean_object:
 	var op:OP
 	enum OP {CLIP, EXTEND, INTERSECT}
 	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
-		#assert(object.state != object.STATE.DESTROYED)
+		assert(object.state == object.STATE.BUILT)
 
 		var incoming_clipShape := ClipShape.new()
 		incoming_clipShape.add_path(shape)
@@ -37,13 +22,13 @@ class wc_boolean_object:
 		
 		match op:
 			OP.CLIP:
-				result = object.geometry.shape.clip(incoming_clipShape)
+				result = object.shape.clip(incoming_clipShape)
 			OP.EXTEND:
-				incoming_clipShape.add_paths(object.geometry.shape.to_packed_paths())
+				incoming_clipShape.add_paths(object.shape.to_packed_paths())
 				result = incoming_clipShape.merge_contents() #TODO: gdext clipper2 MERGE
-				#result = object.geometry.shape.merge(incoming_clipShape)
+				#result = object.shape.merge(incoming_clipShape)
 			OP.INTERSECT:
-				result = object.geometry.shape.intersect(incoming_clipShape)
+				result = object.shape.intersect(incoming_clipShape)
 
 		var final = ClipShape.new()
 		for path in result.to_packed_paths():
@@ -54,21 +39,27 @@ class wc_boolean_object:
 			#destroy_object(ws, obj, notifs)
 			return
 
-		object.geometry.shape = final
+		object.shape = final
 		#if not success:
 		#	GameObject.renormalize_COM(obj)
-		object.geometry.contour = GeometryData.calculate_contour(object.geometry.shape)
+		object.geometry.contour = GeometryData.calculate_contour(object.shape)
 		var new_data = GameObject.calculate_inertiaData(object)
 		object.physicsShape.update_inertiaData(new_data)
 
 		# Manually recalculate all derived data
-		object.physicsShape.update_collision_map(object.geometry.shape, shape) # Updates collision shape 
-
-		#obj.physicsShape.update_inertiaData(WorldState.calculate_inertiaData(obj, ws.gameData))
+		object.physicsShape.update_collision_map(object.shape, shape) # Updates collision shape 
 
 		var notif = Presentation.notif_object_geometry_updated.new(object)
-		notif.shape = object.geometry.shape
+		notif.shape = object.shape
 		notifs.append(notif)
+
+
+
+
+
+
+
+
 
 
 class wc_direction_control_input:
@@ -86,9 +77,9 @@ class wc_direction_control_input:
 class wc_physics_frame:
 	extends wc
 	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
-		for o in worldState.objects:
+		for o in worldState.has_components:
 			WorldCommand.tick_data_io(o)
-		for o in worldState.objects:
+		for o in worldState.has_components:
 			WorldCommand.tick_component(o)
 			WorldCommand.tick_component_physics(o)
 
@@ -135,6 +126,7 @@ class wc_pstate_refresh_all:
 	extends wc
 	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
 		for obj in worldState.objects:
+			if obj.state != GameObject.STATE.BUILT:continue
 			notifs.append(Presentation.notif_pstate_update.new(obj.physicsShape.body))
 
 

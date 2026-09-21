@@ -10,6 +10,7 @@ func create_render_mesh(id:int) -> RenderMesh:
 	assert(not renderMeshes.has(id))
 
 	var p := _new_render_mesh() as RenderMesh
+	p.id = id
 	p.visible = true
 	renderMeshes[id] = p
 	return p
@@ -18,11 +19,9 @@ func create_render_mesh(id:int) -> RenderMesh:
 func _new_render_mesh() -> RenderMesh:
 	var mesh:RenderMesh
 	if renderMesh_pool:
-		print("popping mesh")
 		mesh = renderMesh_pool.pop_front()
 	else:
 		mesh = renderMesh.instantiate()
-		print("creating new mesh")
 		add_child(mesh)
 
 	return mesh

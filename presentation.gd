@@ -63,8 +63,9 @@ class notif_pstate_update:
 	var pstate:PState
 	func _init(body:SolidBody):
 		pstate = body.get_axis_pstate()
+		pstate.transform = body.space.to_game_transform(pstate.transform)
 		for pshape in body.get_physicssShapes():
-			var obj:GameObject = pshape.object
+			var obj:GameObject = pshape._owner
 			ids.append(obj.id)
 			local_xforms.append(obj.physicsShape.transform)
 		
@@ -85,7 +86,7 @@ class notif_object:
 	func _init(o:GameObject):
 		object_id = o.id
 		#color = o.color
-		shape = o.geometry.shape
+		shape = o.shape
 
 class notif:pass
 

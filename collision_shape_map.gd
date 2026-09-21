@@ -28,7 +28,6 @@ func set_cell(idx:Vector2i, shape:ClipShape, body:RigidBody2D, available_cpolys:
 			cpoly = available_cpolys.pop_front()
 		else:
 			cpoly = _add_cpoly(body)
-		cpoly.cell = cell
 		cpoly.polygon = poly
 		cell.cpolys.append(cpoly)
 		#var c = ClipShape.new()

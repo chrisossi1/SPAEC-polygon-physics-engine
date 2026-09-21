@@ -1,6 +1,5 @@
 class_name GeometryData
 
-var shape:ClipShape
 var contour:ContourData
 
 
@@ -219,10 +218,3 @@ static func triangleArea(p:Vector2, q:Vector2, r:Vector2) -> float:
 
 # ### ## #  TODO: A GEOMETRY SERVICE THAT CACHES PROPERTIES? HOW DO I ENFORCE IMMUTABILITY?
 # ### ## # No honestly just a C++ geometry system
-
-
-
-func draw(ci:CanvasItem, ):
-	for path in shape.to_packed_paths():
-		var col := Color.RED if is_hole(path) else Color.BLUE
-		ci.draw_polyline(path+PackedVector2Array([path[0]]), col)

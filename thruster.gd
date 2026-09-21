@@ -20,6 +20,7 @@ func _init():
 	params.max_speed = 10000
 
 func attach_to_object(o:GameObject):
+	assert(o.physicsShape)
 	pshape = o.physicsShape
 func detach_from_object():
 	pshape = null
