@@ -1,6 +1,7 @@
 extends RigidBody2D
 class_name SolidBody
 
+var active:bool = false
 var space:PhysicsSpace
 
 var previous_velocity:Vector2
@@ -11,6 +12,8 @@ signal pstate_update
 
 var pending_pstate:PState = null
 
+
+
 func _ready():
 	sleeping_state_changed.connect(on_sleeping_state_changed)
 func on_sleeping_state_changed():
@@ -19,7 +22,9 @@ func on_sleeping_state_changed():
 func set_pstate(ps:PState):
 	assert(not pending_pstate)
 	pending_pstate = ps
-	sleeping = false
+	sleeping = false #Does this incur big performance cost?
+	add_log("Setting pending pstate to new pstate id" +str(ps))
+	
 
 func init_pstate(ps:PState):
 	transform = ps.transform
@@ -34,7 +39,9 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
 		state.linear_velocity = pending_pstate.linear_velocity
 		state.angular_velocity = pending_pstate.angular_velocity
 		pstate_update.emit(self)
+		add_log("Applied pstate update with id" +str(pending_pstate))
 		pending_pstate = null
+
 
 func _physics_process(delta: float) -> void:
 	#if Engine.get_physics_frames() % 100 > 0:return
@@ -48,7 +55,7 @@ func _physics_process(delta: float) -> void:
 
 
 var physicsShapes:Array[PhysicsShape]
-func get_physicssShapes():
+func get_physicsShapes():
 	return physicsShapes
 
 
@@ -106,3 +113,8 @@ func _draw():
 	for pshape in physicsShapes:
 		draw_circle(pshape.transform * pshape.inertiaData.center_of_mass, 12, Color.RED)
 		draw_circle(pshape.transform.get_origin(), 12, Color.ORANGE, false)
+
+
+var log:=[]
+func add_log(s:String):
+	log.append( str(Engine.get_process_frames()) +": "+ s )

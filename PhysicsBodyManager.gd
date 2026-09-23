@@ -17,9 +17,15 @@ func get_body() -> SolidBody:
 
 	#body.contact.connect
 	body.pstate_update.connect(_on_pstate_updated) # TODO: This should definitely live in SBM not WS..
-
+	body.active = true
 	return body
 
+
+
+func remove_body(body:SolidBody):
+	body.active = false
+	body.queue_free() #Todo: Pool
+	#body.freeze = true
 
 
 

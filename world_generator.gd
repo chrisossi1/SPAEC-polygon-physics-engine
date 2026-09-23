@@ -8,7 +8,7 @@ static func generate() -> Array[GameObject]:
 	for i in range(10000):
 		var o = gen_asteroid()
 		var xform = Transform2D(randf()*2*PI, randf()*250000.*Vector2.RIGHT.rotated(randf()*2*PI))
-		o.saved_pstate = PState.new(xform,Vector2(),.01)
+		o.saved_pstate = PState.new(xform,randf()*10*Vector2.RIGHT.rotated(2*PI*randf()),randf()*6)
 		objs.append(o)
 
 	return objs

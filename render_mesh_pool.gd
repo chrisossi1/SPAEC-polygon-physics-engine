@@ -31,9 +31,9 @@ func free_render_mesh(id: int):
 	var mesh = renderMeshes[id] as RenderMesh
 
 	#mesh.end_tweens()
-	mesh.render_attachments.clear()
+	#mesh.render_attachments.clear()
 
-	# Reset visual state
+	# Reset visual state (tweens)
 	mesh.mesh.position = Vector2.ZERO
 	mesh.mesh.modulate = Color.WHITE
 

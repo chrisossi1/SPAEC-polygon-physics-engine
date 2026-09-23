@@ -7,3 +7,38 @@ UNIFYING RENDER SYNC:
 		Geometry update (Axis of rotation update specifically)
 		PShape move within solidbody
 		body ownership updated
+
+
+
+
+
+
+
+A more body centric physics approach:
+
+	RenderMeshes grouped into Body nodes to take advantage of inherited transform?
+		!!No, due to reparenting cost.
+
+	Bodies owning physicsSpace and being source of truth for in-sim game transform.
+
+	Bodies registered in worldState
+	
+	Event driven PState update per body already implemented
+	
+	periodic sync should iterate all active bodies, not objects
+
+
+
+Extendify:
+	integrate forces
+	geometryData
+	Assembly
+
+
+
+Next:
+	Unloading area/ chunks
+	Multi sim
+	Assembly
+	Composition + Properties
+	Network

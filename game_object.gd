@@ -19,11 +19,15 @@ var state:STATE=STATE.UNREGISTERED
 enum STATE {UNREGISTERED, REGISTERED, BUILT, ACTIVE}
 
 
-
+var log:=[]
+func add_log(s:String):
+	log.append( str(Engine.get_process_frames()) +": "+ s )
 
 
 
 static func register_object(ws:WorldState, o:GameObject):
+	o.add_log("REGISTERING OBJ")
+
 	assert(o.state == GameObject.STATE.UNREGISTERED)
 	o.state = GameObject.STATE.REGISTERED
 	o.id = ws.get_uuid()
@@ -33,8 +37,13 @@ static func register_object(ws:WorldState, o:GameObject):
 		ws.has_components.append(o)
 
 
+
+
+
 # Builds the object in a standalone body. Todo: Pass in a Body argument
 static func build_object(o:GameObject, body:SolidBody):
+	o.add_log("BUILDING OBJ")
+
 	assert(o.state == GameObject.STATE.REGISTERED)
 	o.state = GameObject.STATE.BUILT
 	
@@ -60,6 +69,8 @@ static func build_object(o:GameObject, body:SolidBody):
 		for component in o.components.get_components():
 			component = component as Component
 			component.attach_to_object(o)
+
+
 
 
 static func calculate_inertiaData(o:GameObject):

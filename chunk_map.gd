@@ -2,6 +2,7 @@ class_name ChunkMap
 
 var map = {}
 
+#TODO: UNSTATICIFY 
 static var CHUNK_RADIUS = 8000
 
 
@@ -15,14 +16,17 @@ func save_object(obj:GameObject):
 		map[chunk].append(obj)
 	else:
 		map[chunk] = [obj]
+	
+	return chunk
 
 
 func get_objects(chunk:Vector2i):
 	if not map.has(chunk):return[]
 	return map[chunk]
 
-
-
+func clear_chunk(chunk:Vector2i):
+	if map.has(chunk):
+		map.erase(chunk)
 
 
 func _draw(c:CanvasItem):
@@ -32,6 +36,9 @@ func _draw(c:CanvasItem):
 		
 	
 
+
+func chunk_rect(chunk: Vector2i)->Rect2:
+	return Rect2(get_center(chunk) - Vector2.ONE*CHUNK_RADIUS, 2*Vector2.ONE*CHUNK_RADIUS)
 
 
 

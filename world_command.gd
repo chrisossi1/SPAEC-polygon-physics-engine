@@ -124,7 +124,7 @@ class wc_pause:
 
 class wc_pstate_refresh_all:
 	extends wc
-	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
+	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]): #TODO: Iterate only built bodies (not objects)
 		for obj in worldState.objects:
 			if obj.state != GameObject.STATE.BUILT:continue
 			notifs.append(Presentation.notif_pstate_update.new(obj.physicsShape.body))
@@ -140,6 +140,8 @@ class event_body_pstate_updated:
 	extends wc
 	var body:SolidBody
 	func resolve(worldState:WorldState, notifs:Array[Presentation.notif]):
+		if not is_instance_valid(body):return
+		if not body.active:return
 		notifs.append(Presentation.notif_pstate_update.new(body))
 
 
